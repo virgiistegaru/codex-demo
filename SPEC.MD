@@ -21,6 +21,10 @@
 * Minimal but **proper error handling** (no sensitive detail leakage).
 * Custom **404 page**.
 * Styling: “elegant acqua colors”.
+* Note content is stored only as TipTap JSON in `content_json`; there is no `content_text` field or parallel plain-text content store.
+* The app does not support query-parameter-driven behavior, search, or filtering. Note lists show all of the signed-in user's notes, sorted by `updated_at DESC`.
+* All application data reads happen in React Server Components through server-side data-access functions. Do not fetch page data from Client Components with `useEffect()`, browser `fetch()`, or a client-side data library.
+* All server-side mutations, including authentication and note/share changes, use React/Next.js Server Functions (Server Actions). Do not add mutation API routes.
 
 ---
 
@@ -29,10 +33,16 @@
 ### Rendering and data access
 
 * Use Next.js App Router.
-* Use **React Server Components** for all note data reads.
-* Use **Server Functions (Server Actions)** for all note mutations.
-* Do not use client-side data fetching for initial note/page data (`useEffect() + fetch()` etc.).
+* Use **React Server Components** for all application data reads, calling server-side data-access functions directly.
+* Use **Server Functions (Server Actions)** for all server mutations, including authentication, note operations, and share operations.
+* Do not use client-side data fetching (`useEffect() + fetch()` etc.) for initial data or subsequent application data reads.
 * Client Components only for TipTap editor UI and minimal interactivity.
+
+### Explicit non-goals
+
+* No `content_text` column, property, or duplicate plain-text representation. `content_json` is the sole persisted note body.
+* No query-parameter-based features, search, or filtering. Routes do not accept query parameters as application inputs.
+* No separate mutation API endpoints; mutations are Server Actions.
 
 ### Auth
 
@@ -430,7 +440,7 @@ Suggested `code` values:
 
 ### Required pages UI states
 
-* Loading states for note fetch and share fetch.
+* Use route-level loading UI or Suspense where needed while Server Components resolve data; do not fetch note/share data from client effects.
 * Empty list state for `/notes`.
 * Inline validation messages (generic).
 
