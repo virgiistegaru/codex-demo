@@ -1,8 +1,8 @@
-import { PagePlaceholder } from "@/src/components/page-placeholder";
+import { PageCard } from "@/src/components/page-card";
 
 export default function NewNotePage() {
   return (
-    <PagePlaceholder
+    <PageCard
       title="New note"
       description="New note page placeholder."
     />

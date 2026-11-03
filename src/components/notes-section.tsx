@@ -1,17 +1,10 @@
 import type { ReactNode } from "react";
+import { PageFrame } from "@/src/components/page-frame";
 
 type NotesSectionProps = {
   children: ReactNode;
 };
 
 export function NotesSection({ children }: NotesSectionProps) {
-  return (
-    <section aria-label="Notes section">
-      <header>
-        <p>TinyNotes</p>
-        <p>Notes area placeholder.</p>
-      </header>
-      {children}
-    </section>
-  );
+  return <PageFrame area="PRIVATE AREA">{children}</PageFrame>;
 }

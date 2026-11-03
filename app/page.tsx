@@ -4,7 +4,8 @@ export default function HomePage() {
   return (
     <PagePlaceholder
       title="TinyNotes"
-      description="Welcome to the TinyNotes page scaffold."
+      description="This is the placeholder for the root public route."
+      note="TODO: If authenticated, redirect to /notes; otherwise redirect to /login."
     />
   );
 }

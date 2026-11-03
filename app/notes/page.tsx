@@ -1,8 +1,8 @@
-import { PagePlaceholder } from "@/src/components/page-placeholder";
+import { PageCard } from "@/src/components/page-card";
 
 export default function NotesPage() {
   return (
-    <PagePlaceholder
+    <PageCard
       title="Your notes"
       description="Notes list page placeholder."
     />
