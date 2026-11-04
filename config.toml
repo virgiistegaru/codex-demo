@@ -7,7 +7,7 @@ model_reasoning_effort = "xhigh"
 
 # "never" = The agent executes commands and edits files immediately without asking.
 # It will only stop if it encounters an error it cannot resolve.
-approval_policy = "never"
+approval_policy = "on-request"
 # Alternatives:
 # approval_policy = "on-request"  # (Default) Agent runs safe commands automatically but asks when necessary.
 # approval_policy = "on-failure"  # Agent runs automatically but pauses if a command fails/errors.
@@ -16,7 +16,7 @@ approval_policy = "never"
 # "danger-full-access" = COMPLETELY DISABLES THE SANDBOX.
 # The agent can read/write any file on your computer (e.g., ~/.ssh, /etc) and
 # has full unrestricted network access.
-sandbox_mode = "danger-full-access"
+sandbox_mode = "workspace-write"
 # Alternatives:
 # sandbox_mode = "workspace-write" # (Default) Can only edit files inside the project folder. Blocked from system paths.
 # sandbox_mode = "read-only"       # Can read files but cannot edit them or run commands.
@@ -27,7 +27,7 @@ sandbox_mode = "danger-full-access"
 
 # "live" = The agent searches the real-time internet.
 # (Defaults to "live" automatically when sandbox is set to "danger-full-access")
-web_search = "live"
+web_search = "cached"
 # Alternatives:
 # web_search = "cached"    # (Default) Uses OpenAI's cached index (safer, prevents visiting malicious sites).
 # web_search = "disabled"  # No web search capability.
@@ -38,7 +38,7 @@ web_search = "live"
 
 # [shell_environment_policy]
 # "all" = Passes ALL your environment variables (API keys, tokens) to the agent's shell.
-# inherit = "all"
+inherit = "core"
 # Alternatives:
 # inherit = "core"  # Passes only basic vars like PATH, HOME, USER.
 # inherit = "none"  # Starts with a completely empty environment.
