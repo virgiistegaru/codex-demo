@@ -1,1 +1,4 @@
-project_doc_fallback_filenames=["AGENTS.md"]
+project_doc_fallback_filenames = ["AGENTS.md"]
+
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"

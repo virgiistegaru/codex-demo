@@ -1,11 +1,7 @@
-import { PagePlaceholder } from "@/src/components/page-placeholder";
+import { redirect } from "next/navigation";
+import { getSession } from "@/src/lib/auth-session";
 
-export default function HomePage() {
-  return (
-    <PagePlaceholder
-      title="TinyNotes"
-      description="This is the placeholder for the root public route."
-      note="TODO: If authenticated, redirect to /notes; otherwise redirect to /login."
-    />
-  );
+export default async function HomePage() {
+  const session = await getSession();
+  redirect(session ? "/notes" : "/login");
 }

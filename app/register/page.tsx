@@ -1,10 +1,13 @@
-import { PagePlaceholder } from "@/src/components/page-placeholder";
+import { redirect } from "next/navigation";
+import { AuthForm } from "@/src/components/auth-form";
+import { getSession } from "@/src/lib/auth-session";
 
-export default function RegisterPage() {
-  return (
-    <PagePlaceholder
-      title="Register"
-      description="Registration page placeholder."
-    />
-  );
+export default async function RegisterPage() {
+  const session = await getSession();
+
+  if (session) {
+    redirect("/notes");
+  }
+
+  return <AuthForm mode="register" />;
 }
