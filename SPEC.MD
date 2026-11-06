@@ -414,7 +414,11 @@ Suggested `code` values:
 
 ### Security headers (minimum)
 
-* `Content-Security-Policy` (no inline scripts; allow self; allow style as needed by Next/Tailwind)
+* `Content-Security-Policy` is generated per request in `proxy.ts` with a fresh nonce.
+  * All environments default to `default-src 'self'`; `script-src` allows same-origin scripts and the request nonce with `strict-dynamic`.
+  * Development additionally allows `unsafe-eval` for Next.js debugging and `unsafe-inline` styles for Next.js and development tooling. Development-only inline styles are not nonce-authorized.
+  * Production keeps nonce-based script and style policies without `unsafe-inline` or `unsafe-eval`, and adds `upgrade-insecure-requests`.
+  * Both environments restrict images to same-origin, `blob:`, and `data:`; fonts and connections to same-origin; disallow objects; restrict base URLs and form actions to same-origin; and set `frame-ancestors 'none'`.
 * `Referrer-Policy: no-referrer`
 * `X-Content-Type-Options: nosniff`
 * `X-Frame-Options: DENY` (or CSP frame-ancestors)

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Editor, JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -94,28 +94,28 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveRef = useRef<(submitAfterSave: boolean) => Promise<boolean>>(async () => false);
 
-  function scheduleAutoSave() {
+  const scheduleAutoSave = useCallback(() => {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(() => {
       autoSaveTimer.current = null;
       void saveRef.current(false);
     }, 950);
-  }
+  }, []);
 
-  function markUnsaved() {
+  const markUnsaved = useCallback(() => {
     revision.current += 1;
     hasUnsavedChanges.current = true;
     setSaveState("unsaved");
     setSaveError("");
     scheduleAutoSave();
-  }
+  }, [scheduleAutoSave]);
 
-  function handleEditorUpdate() {
+  const handleEditorUpdate = useCallback(() => {
     markUnsaved();
-  }
+  }, [markUnsaved]);
 
-  const editor = useEditor({
-    extensions: [
+  const extensions = useMemo(
+    () => [
       StarterKit.configure({
         link: {
           protocols: ["http", "https"],
@@ -137,16 +137,24 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
         },
       }),
     ],
-    content: initialContent ?? EMPTY_NOTE_DOCUMENT,
-    editable: !isSaving,
-    immediatelyRender: false,
-    onUpdate: handleEditorUpdate,
-    editorProps: {
+    [],
+  );
+  const editorProps = useMemo(
+    () => ({
       attributes: {
         class: "note-editor-content",
         "aria-label": "Note content",
       },
-    },
+    }),
+    [],
+  );
+
+  const editor = useEditor({
+    extensions,
+    content: initialContent ?? EMPTY_NOTE_DOCUMENT,
+    immediatelyRender: false,
+    onUpdate: handleEditorUpdate,
+    editorProps,
   });
 
   const toolbarState = useEditorState({ editor, selector: selectToolbarState });

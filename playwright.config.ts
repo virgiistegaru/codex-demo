@@ -1,9 +1,10 @@
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = "http://127.0.0.1:3100";
-const databasePath = join(tmpdir(), `tinynotes-playwright-${process.pid}.db`);
+const port = Number(process.env.PLAYWRIGHT_PORT ?? 3101);
+const baseURL = `http://127.0.0.1:${port}`;
+const databasePath = resolve(tmpdir(), `tinynotes-playwright-${process.pid}.db`);
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -23,15 +24,15 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "bun run db:migrate && bun run dev -- --hostname 127.0.0.1 --port 3100",
+    command: `bun run db:migrate && bun run dev -- --hostname 127.0.0.1 --port ${port}`,
     url: baseURL,
     timeout: 120_000,
     reuseExistingServer: false,
     env: {
-      ...process.env,
       DB_PATH: databasePath,
-      AUTH_SECRET: "playwright-test-secret-that-is-long-enough-32-chars",
+      AUTH_SECRET: "tinynotes-playwright-test-secret-at-least-32-characters",
       APP_URL: baseURL,
+      NODE_ENV: "development",
     },
   },
 });
