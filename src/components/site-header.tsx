@@ -14,7 +14,8 @@ export async function SiteHeader() {
 
         {session ? (
           <nav aria-label="Account" className="site-nav">
-            <Link href="/notes">Your notes</Link>
+            <Link href="/notes">Notes</Link>
+            <Link href="/notes/new">New note</Link>
             <form action={signOutAction}>
               <button className="site-nav-sign-out" type="submit">
                 Logout

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/src/components/site-header";
 import "./globals.css";
+import "./notes.css";
 
 export const metadata: Metadata = {
   title: "TinyNotes",

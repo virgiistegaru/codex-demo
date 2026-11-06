@@ -6,5 +6,9 @@ type NotesSectionProps = {
 };
 
 export function NotesSection({ children }: NotesSectionProps) {
-  return <PageFrame area="PRIVATE AREA">{children}</PageFrame>;
+  return (
+    <PageFrame area="PRIVATE AREA" className="notes-area-frame">
+      {children}
+    </PageFrame>
+  );
 }
