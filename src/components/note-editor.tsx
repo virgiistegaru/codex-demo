@@ -441,21 +441,28 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
 
   return (
     <form className="note-editor-form" onSubmit={handleFormSubmit}>
-      <p aria-live="polite" className={`save-status save-status-${saveState}`} role="status">
-        {saveLabel}
-      </p>
-      <label className="note-title-field" htmlFor="note-title">
-        <span>Title</span>
-        <input
-          autoComplete="off"
-          disabled={isSaving}
-          id="note-title"
-          maxLength={200}
-          onChange={handleTitleChange}
-          placeholder="Untitled note"
-          value={title}
-        />
-      </label>
+      <div className="note-editor-heading-controls">
+        <label className="note-title-field" htmlFor="note-title">
+          <span>Title</span>
+          <input
+            autoComplete="off"
+            disabled={isSaving}
+            id="note-title"
+            maxLength={200}
+            onChange={handleTitleChange}
+            placeholder="Untitled note"
+            value={title}
+          />
+        </label>
+        <div className="note-save-controls">
+          <p aria-live="polite" className={`save-status save-status-${saveState}`} role="status">
+            {saveLabel}
+          </p>
+          <button className="auth-submit note-submit" disabled={!editor || isSaving} type="submit">
+            {isSaving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
 
       <div aria-label="Text formatting" className="editor-toolbar" role="toolbar">
         <ToolbarButton
@@ -580,9 +587,6 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
           type="button"
         >
           Clear
-        </button>
-        <button className="auth-submit note-submit" disabled={!editor || isSaving} type="submit">
-          {isSaving ? "Saving…" : "Submit"}
         </button>
       </div>
     </form>

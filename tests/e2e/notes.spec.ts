@@ -15,30 +15,38 @@ async function register(page: Page, email: string): Promise<void> {
   await expect(page).toHaveURL(/\/notes$/);
 }
 
-test("registers, creates a note, autosaves edits, and signs out", async ({ page }) => {
+test("registers, saves and edits a note, and signs out", async ({ page }) => {
   const email = uniqueEmail();
   await register(page, email);
 
   await expect(page.getByRole("heading", { name: "No notes yet" })).toBeVisible();
-  await page.getByRole("link", { name: "New note" }).click();
+  await page
+    .getByRole("navigation", { name: "Account" })
+    .getByRole("link", { name: "New note" })
+    .click();
   await expect(page.getByRole("heading", { name: "Create note" })).toBeVisible();
 
   await page.getByLabel("Title").fill("First draft");
   await page.getByRole("textbox", { name: "Note content" }).fill("A note that should persist.");
-  await page.getByRole("button", { name: "Submit" }).click();
+  await page.getByRole("button", { name: "Save" }).click();
   await expect(page).toHaveURL(/\/notes$/);
   await expect(page.getByRole("link", { name: /First draft/ })).toBeVisible();
 
   await page.getByRole("link", { name: /First draft/ }).click();
   await expect(page.getByRole("heading", { name: "Edit note" })).toBeVisible();
   await page.getByLabel("Title").fill("Revised draft");
-  await page.getByRole("textbox", { name: "Note content" }).fill("Autosaved note content.");
-  await expect(page.getByRole("status")).toHaveText("Saved", { timeout: 10_000 });
+  await page.getByRole("textbox", { name: "Note content" }).fill("Updated note content.");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).toHaveURL(/\/notes$/);
+  await expect(page.getByRole("link", { name: /Revised draft/ })).toBeVisible();
+
+  await page.getByRole("link", { name: /Revised draft/ }).click();
+  await expect(page.getByRole("heading", { name: "Edit note" })).toBeVisible();
 
   await page.reload();
   await expect(page.getByLabel("Title")).toHaveValue("Revised draft");
   await expect(page.getByRole("textbox", { name: "Note content" })).toContainText(
-    "Autosaved note content.",
+    "Updated note content.",
   );
 
   await page.getByRole("button", { name: "Logout" }).click();

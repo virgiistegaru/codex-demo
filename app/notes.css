@@ -158,9 +158,17 @@
   margin-top: 1rem;
 }
 
+.note-editor-heading-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.8rem;
+}
+
 .note-title-field {
   display: grid;
   gap: 0.45rem;
+  min-width: 0;
   color: var(--foreground);
   font-size: 0.9rem;
   font-weight: 650;
@@ -189,7 +197,7 @@
 }
 
 .save-status {
-  margin: 0.3rem 0 0;
+  margin: 0;
   color: var(--foreground-muted);
   font-size: 0.9rem;
   font-weight: 600;
@@ -292,6 +300,13 @@
   gap: 0.65rem;
 }
 
+.note-save-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
 .secondary-button {
   cursor: pointer;
   padding: 0.5rem 0.85rem;
@@ -312,6 +327,14 @@
   .back-to-notes {
     justify-self: start;
     align-self: start;
+  }
+
+  .note-editor-heading-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .note-save-controls {
+    justify-content: flex-end;
   }
 
   .note-editor-surface,
