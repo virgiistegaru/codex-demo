@@ -344,53 +344,53 @@
 }
 
 @layer components {
-  .note-editor-content :where(p, ul, ol, blockquote, pre, h1, h2, h3) {
+  :is(.note-editor-content, .shared-note-content) :where(p, ul, ol, blockquote, pre, h1, h2, h3) {
     margin-block: 0.75rem;
   }
 
-  .note-editor-content h1 {
+  :is(.note-editor-content, .shared-note-content) h1 {
     font-size: 1.75rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.25;
   }
 
-  .note-editor-content h2 {
+  :is(.note-editor-content, .shared-note-content) h2 {
     font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: -0.015em;
     line-height: 1.3;
   }
 
-  .note-editor-content h3 {
+  :is(.note-editor-content, .shared-note-content) h3 {
     font-size: 1.25rem;
     font-weight: 600;
     letter-spacing: -0.01em;
     line-height: 1.35;
   }
 
-  .note-editor-content blockquote {
+  :is(.note-editor-content, .shared-note-content) blockquote {
     border-inline-start: 3px solid var(--accent);
     color: var(--foreground-muted);
     font-style: italic;
     padding-inline-start: 0.9rem;
   }
 
-  .note-editor-content ul {
+  :is(.note-editor-content, .shared-note-content) ul {
     list-style: disc;
     padding-inline-start: 1.4rem;
   }
 
-  .note-editor-content ol {
+  :is(.note-editor-content, .shared-note-content) ol {
     list-style: decimal;
     padding-inline-start: 1.4rem;
   }
 
-  .note-editor-content li {
+  :is(.note-editor-content, .shared-note-content) li {
     margin-block: 0.3rem;
   }
 
-  .note-editor-content pre {
+  :is(.note-editor-content, .shared-note-content) pre {
     overflow-x: auto;
     border: 1px solid var(--border);
     border-radius: 0.6rem;
@@ -398,13 +398,13 @@
     padding: 0.8rem 0.9rem;
   }
 
-  .note-editor-content pre code {
+  :is(.note-editor-content, .shared-note-content) pre code {
     background: transparent;
     padding: 0;
     border-radius: 0;
   }
 
-  .note-editor-content :not(pre) > code {
+  :is(.note-editor-content, .shared-note-content) :not(pre) > code {
     border: 1px solid var(--border);
     border-radius: 0.35rem;
     background: var(--surface-soft);
@@ -412,10 +412,79 @@
     font-size: 0.92em;
   }
 
-  .note-editor-content a {
+  :is(.note-editor-content, .shared-note-content) a {
     color: var(--accent);
     text-decoration-line: underline;
     text-decoration-thickness: 1.5px;
     text-underline-offset: 0.16em;
+  }
+}
+
+.note-sharing-controls {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.6rem;
+  padding: 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--surface);
+}
+
+.note-sharing-controls h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.note-sharing-controls .page-description {
+  margin: 0.4rem 0 0;
+}
+
+.share-link-controls {
+  display: flex;
+  align-items: end;
+  gap: 0.65rem;
+}
+
+.share-link-controls .note-title-field {
+  flex: 1;
+}
+
+.share-link-controls .secondary-button {
+  min-height: 3.1rem;
+}
+
+.note-management-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.danger-button {
+  margin-inline-start: auto;
+  border-color: #aa5c60;
+  color: #ffb4ab;
+}
+
+.danger-button:hover:not(:disabled) {
+  background: #542b39;
+}
+
+.shared-note-content {
+  min-width: 0;
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .share-link-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .danger-button {
+    margin-inline-start: 0;
   }
 }
