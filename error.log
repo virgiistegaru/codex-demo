@@ -34,3 +34,21 @@
 [2026-11-09T11:21:22.571669+00:00] env: /environments JSON (pretty):
 []
 [2026-11-09T11:21:22.955053+00:00] env: status=200 OK content-type=application/json
+[2026-11-09T11:27:21.378684+00:00] startup: base_url=https://chatgpt.com/backend-api path_style=wham
+[2026-11-09T11:27:21.379319+00:00] auth: mode=ChatGPT account_id=7ea27862-d978-4685-a34a-f975ab3b7e2d
+[2026-11-09T11:27:21.380028+00:00] auth: set ChatGPT-Account-Id header: 7ea27862-d978-4685-a34a-f975ab3b7e2d
+[2026-11-09T11:27:21.389780+00:00] startup: wham_force_internal=false ua=codex_cli_rs/0.167.0 (Mac OS 26.5.2; arm64) vscode/1.145.2 (codex_cloud_tasks_tui)
+[2026-11-09T11:27:21.414524+00:00] env: parsed HTTP GitHub origin => virgiistegaru/codex-demo
+[2026-11-09T11:27:21.414869+00:00] env: git origins: [SanitizedGitUrl("https://github.com/virgiistegaru/codex-demo.git")]
+[2026-11-09T11:27:21.414902+00:00] env: parsed HTTP GitHub origin => virgiistegaru/codex-demo
+[2026-11-09T11:27:21.414971+00:00] env: GET https://chatgpt.com/backend-api/wham/environments/by-repo/github/virgiistegaru/codex-demo
+[2026-11-09T11:27:23.121445+00:00] http.list_tasks: env=<all> limit=20 cursor_in=<none> cursor_out=<none> items=0
+[2026-11-09T11:27:23.121956+00:00] refresh.apply: env=<all> count=0
+[2026-11-09T11:27:24.089033+00:00] env: status=200 OK content-type=application/json
+[2026-11-09T11:27:24.458309+00:00] env: status=200 OK content-type=application/json
+[2026-11-09T11:27:24.496883+00:00] env: status=200 OK content-type=application/json
+[2026-11-09T11:27:24.497998+00:00] env: by-repo returned 0 env(s) for virgiistegaru/codex-demo
+[2026-11-09T11:27:24.498208+00:00] env: GET https://chatgpt.com/backend-api/wham/environments
+[2026-11-09T11:27:24.969053+00:00] env: status=200 OK content-type=application/json
+[2026-11-09T11:27:24.970810+00:00] env: /environments JSON (pretty):
+[]
