@@ -458,9 +458,6 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
           <p aria-live="polite" className={`save-status save-status-${saveState}`} role="status">
             {saveLabel}
           </p>
-          <button className="auth-submit note-submit" disabled={!editor || isSaving} type="submit">
-            {isSaving ? "Saving…" : "Save"}
-          </button>
         </div>
       </div>
 
@@ -543,7 +540,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
           label="Block quote"
           onClick={handleToggleBlockquote}
         >
-          “ ”
+          Quote
         </ToolbarButton>
         <ToolbarButton
           active={toolbarState?.link}
@@ -587,6 +584,9 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
           type="button"
         >
           Clear
+        </button>
+        <button className="auth-submit note-submit" disabled={!editor || isSaving} type="submit">
+          {isSaving ? "Saving…" : "Save"}
         </button>
       </div>
     </form>
