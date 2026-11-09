@@ -176,7 +176,7 @@ test("shares the latest formatted draft publicly and revokes or replaces its lin
   }
 });
 
-test("confirms deletion and removes the note and its public link despite pending edits", async ({
+test("confirms soft deletion and hides the note and its public link despite pending edits", async ({
   page,
   browser,
 }) => {
@@ -187,7 +187,11 @@ test("confirms deletion and removes the note and its public link despite pending
   await expect(shareInput).toHaveValue(/\/s\/[A-Za-z0-9_-]{43}$/);
   const shareUrl = await shareInput.inputValue();
 
-  page.once("dialog", (dialog) => dialog.dismiss());
+  page.once("dialog", (dialog) => {
+    expect(dialog.message()).toContain("Delete this note?");
+    expect(dialog.message()).not.toContain("permanently");
+    void dialog.dismiss();
+  });
   await page.getByRole("button", { name: "Delete note", exact: true }).click();
   await expect(page).toHaveURL(noteUrl);
   await expect(page.getByLabel("Title")).toHaveValue("Disposable note");
