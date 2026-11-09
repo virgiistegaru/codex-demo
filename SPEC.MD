@@ -189,6 +189,7 @@ All actions return typed result objects (success/error) and must not leak SQL/in
 * `share_enabled INTEGER NOT NULL DEFAULT 0`
 * `created_at TEXT NOT NULL`
 * `updated_at TEXT NOT NULL`
+* `deleted_at TEXT NULL` (UTC ISO timestamp when deleted; `NULL` means active)
 * Indexes:
 
   * `CREATE INDEX idx_note_user_updated ON note(user_id, updated_at DESC);`
@@ -232,7 +233,7 @@ Purpose: store public tokens separately, allow disable without deleting.
 ```sql
 SELECT id, title, share_enabled, created_at, updated_at
 FROM note
-WHERE user_id = ?
+WHERE user_id = ? AND deleted_at IS NULL
 ORDER BY updated_at DESC;
 ```
 
@@ -248,7 +249,7 @@ VALUES (?, ?, ?, ?, 0, ?, ?);
 ```sql
 SELECT id, user_id, title, content_json, share_enabled, created_at, updated_at
 FROM note
-WHERE id = ? AND user_id = ?;
+WHERE id = ? AND user_id = ? AND deleted_at IS NULL;
 ```
 
 **Update note (autosave)**
@@ -258,14 +259,15 @@ UPDATE note
 SET title = COALESCE(?, title),
     content_json = COALESCE(?, content_json),
     updated_at = ?
-WHERE id = ? AND user_id = ?;
+WHERE id = ? AND user_id = ? AND deleted_at IS NULL;
 ```
 
 **Delete note**
 
 ```sql
-DELETE FROM note
-WHERE id = ? AND user_id = ?;
+UPDATE note
+SET deleted_at = ?, share_enabled = 0, updated_at = ?
+WHERE id = ? AND user_id = ? AND deleted_at IS NULL;
 ```
 
 ### Sharing

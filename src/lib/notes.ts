@@ -26,7 +26,7 @@ export function listNotesForUser(userId: string): NoteSummary[] {
     .query(
       `SELECT id, title, share_enabled, updated_at
        FROM note
-       WHERE user_id = ?
+       WHERE user_id = ? AND deleted_at IS NULL
        ORDER BY updated_at DESC`,
     )
     .all(userId) as NoteSummary[];
@@ -37,7 +37,7 @@ export function getNoteForUser(id: string, userId: string): NoteRecord | null {
     .query(
       `SELECT id, user_id, title, content_json, share_enabled, created_at, updated_at
        FROM note
-       WHERE id = ? AND user_id = ?`,
+       WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
     )
     .get(id, userId) as NoteRecord | null;
 }
@@ -62,14 +62,31 @@ export function updateNote(
     .query(
       `UPDATE note
        SET title = ?, content_json = ?, updated_at = ?
-       WHERE id = ? AND user_id = ?`,
+       WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
     )
     .run(title, contentJson, new Date().toISOString(), id, userId);
   return result.changes > 0;
 }
 
 export function deleteNote(id: string, userId: string): boolean {
-  return db.query("DELETE FROM note WHERE id = ? AND user_id = ?").run(id, userId).changes > 0;
+  return db
+    .transaction(() => {
+      const now = new Date().toISOString();
+      const result = db
+        .query(
+          `UPDATE note
+           SET deleted_at = ?, share_enabled = 0, updated_at = ?
+           WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+        )
+        .run(now, now, id, userId);
+      if (result.changes === 0) return false;
+
+      db.query(
+        "UPDATE note_share SET enabled = 0, disabled_at = ? WHERE note_id = ? AND enabled = 1",
+      ).run(now, id);
+      return true;
+    })
+    .immediate();
 }
 
 export function enableNoteShare(id: string, userId: string): string | null {
@@ -77,7 +94,9 @@ export function enableNoteShare(id: string, userId: string): string | null {
     .transaction(() => {
       const now = new Date().toISOString();
       const updated = db
-        .query("UPDATE note SET share_enabled = 1, updated_at = ? WHERE id = ? AND user_id = ?")
+        .query(
+          "UPDATE note SET share_enabled = 1, updated_at = ? WHERE id = ? AND user_id = ? AND deleted_at IS NULL",
+        )
         .run(now, id, userId);
       if (updated.changes === 0) return null;
 
@@ -102,7 +121,9 @@ export function disableNoteShare(id: string, userId: string): boolean {
     .transaction(() => {
       const now = new Date().toISOString();
       const updated = db
-        .query("UPDATE note SET share_enabled = 0, updated_at = ? WHERE id = ? AND user_id = ?")
+        .query(
+          "UPDATE note SET share_enabled = 0, updated_at = ? WHERE id = ? AND user_id = ? AND deleted_at IS NULL",
+        )
         .run(now, id, userId);
       if (updated.changes === 0) return false;
 
@@ -123,7 +144,7 @@ export function getSharedNoteByToken(token: string): SharedNoteRecord | null {
       `SELECT n.title, n.content_json, n.updated_at
        FROM note_share s
        JOIN note n ON n.id = s.note_id
-       WHERE s.token_hash = ? AND s.enabled = 1 AND n.share_enabled = 1
+       WHERE s.token_hash = ? AND s.enabled = 1 AND n.share_enabled = 1 AND n.deleted_at IS NULL
        LIMIT 1`,
     )
     .get(tokenHash) as SharedNoteRecord | null;

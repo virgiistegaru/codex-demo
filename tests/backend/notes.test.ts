@@ -6,6 +6,9 @@ const database = new Database(":memory:");
 database.run("PRAGMA foreign_keys = ON");
 database.run(await Bun.file(new URL("../../migrations/0001_init.sql", import.meta.url)).text());
 database.run(await Bun.file(new URL("../../migrations/0002_notes.sql", import.meta.url)).text());
+database.run(
+  await Bun.file(new URL("../../migrations/0003_note_soft_delete.sql", import.meta.url)).text(),
+);
 
 mock.module("server-only", () => ({}));
 mock.module("@/src/lib/db", () => ({ db: database }));
@@ -136,7 +139,7 @@ describe("note sharing data access", () => {
     expect(database.query("SELECT count(*) AS count FROM note_share").get()).toEqual({ count: 1 });
   });
 
-  it("deletes a note and cascades its active and disabled share records", () => {
+  it("soft-deletes a note, revokes its public link, and retains its share history", () => {
     const id = createNote(ownerId, "Delete", contentJson);
     enableNoteShare(id, ownerId);
     const token = enableNoteShare(id, ownerId)!;
@@ -145,7 +148,25 @@ describe("note sharing data access", () => {
     expect(deleteNote(id, ownerId)).toBe(false);
     expect(getNoteForUser(id, ownerId)).toBeNull();
     expect(getSharedNoteByToken(token)).toBeNull();
-    expect(database.query("SELECT count(*) AS count FROM note_share").get()).toEqual({ count: 0 });
+    expect(listNotesForUser(ownerId)).toEqual([]);
+    expect(database.query("SELECT deleted_at FROM note WHERE id = ?").get(id)).toMatchObject({
+      deleted_at: expect.any(String),
+    });
+    expect(database.query("SELECT count(*) AS count FROM note_share").get()).toEqual({ count: 2 });
+    expect(
+      database.query("SELECT count(*) AS count FROM note_share WHERE enabled = 1").get(),
+    ).toEqual({ count: 0 });
+  });
+
+  it("prevents editing or sharing a deleted note", () => {
+    const id = createNote(ownerId, "Deleted", contentJson);
+    const token = enableNoteShare(id, ownerId)!;
+
+    expect(deleteNote(id, ownerId)).toBe(true);
+    expect(updateNote(id, ownerId, "Changed", contentJson)).toBe(false);
+    expect(enableNoteShare(id, ownerId)).toBeNull();
+    expect(disableNoteShare(id, ownerId)).toBe(false);
+    expect(getSharedNoteByToken(token)).toBeNull();
   });
 
   it("rejects malformed and unknown tokens", () => {

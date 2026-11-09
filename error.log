@@ -52,3 +52,7 @@
 [2026-11-09T11:27:24.969053+00:00] env: status=200 OK content-type=application/json
 [2026-11-09T11:27:24.970810+00:00] env: /environments JSON (pretty):
 []
+[2026-11-09T11:36:27.721135+00:00] startup: base_url=https://chatgpt.com/backend-api path_style=wham
+[2026-11-09T11:36:27.721799+00:00] auth: mode=ChatGPT account_id=7ea27862-d978-4685-a34a-f975ab3b7e2d
+[2026-11-09T11:36:27.722470+00:00] auth: set ChatGPT-Account-Id header: 7ea27862-d978-4685-a34a-f975ab3b7e2d
+[2026-11-09T11:36:28.416664+00:00] http.list_tasks: env=<all> limit=20 cursor_in=<none> cursor_out=<none> items=0

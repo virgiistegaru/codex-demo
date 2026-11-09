@@ -448,7 +448,7 @@ export function NoteEditor({
   async function handleDelete() {
     const id = noteIdRef.current;
     if (!id || operationInProgress.current) return;
-    if (!window.confirm("Delete this note permanently? Its share link will also stop working.")) {
+    if (!window.confirm("Delete this note? Its share link will also stop working.")) {
       return;
     }
 
