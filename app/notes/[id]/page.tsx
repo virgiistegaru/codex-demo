@@ -40,6 +40,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
       <NoteEditor
         initialContent={content}
         initialTitle={note.title}
+        initialShareEnabled={note.share_enabled === 1}
         key={note.id}
         noteId={note.id}
       />

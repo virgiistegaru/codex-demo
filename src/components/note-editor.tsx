@@ -6,7 +6,12 @@ import type { Editor, JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useRouter } from "next/navigation";
-import { saveNoteAction } from "@/src/app-actions/notes";
+import {
+  deleteNoteAction,
+  disableShareAction,
+  enableShareAction,
+  saveNoteAction,
+} from "@/src/app-actions/notes";
 import { EMPTY_NOTE_DOCUMENT } from "@/src/lib/note-content";
 
 type SaveState = "saved" | "unsaved" | "saving" | "error";
@@ -15,6 +20,7 @@ type NoteEditorProps = {
   noteId: string | null;
   initialTitle: string;
   initialContent: JSONContent;
+  initialShareEnabled?: boolean;
 };
 
 type ToolbarState = {
@@ -80,13 +86,26 @@ function ToolbarButton({
   );
 }
 
-export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorProps) {
+export function NoteEditor({
+  noteId,
+  initialTitle,
+  initialContent,
+  initialShareEnabled = false,
+}: NoteEditorProps) {
   const router = useRouter();
   const [currentNoteId, setCurrentNoteId] = useState(noteId);
   const [title, setTitle] = useState(initialTitle);
   const [saveState, setSaveState] = useState<SaveState>(noteId === null ? "unsaved" : "saved");
   const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [shareEnabled, setShareEnabled] = useState(initialShareEnabled);
+  const [shareUrl, setShareUrl] = useState("");
+  const [operation, setOperation] = useState<"share" | "revoke" | "delete" | null>(null);
+  const [operationError, setOperationError] = useState("");
+  const [copyStatus, setCopyStatus] = useState("");
+  const operationInProgress = useRef(false);
+  const deleting = useRef(false);
+  const noteIdRef = useRef(noteId);
   const hasUnsavedChanges = useRef(false);
   const activeSave = useRef<Promise<boolean> | null>(null);
   const navigationInProgress = useRef(false);
@@ -95,6 +114,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
   const saveRef = useRef<(submitAfterSave: boolean) => Promise<boolean>>(async () => false);
 
   const scheduleAutoSave = useCallback(() => {
+    if (deleting.current) return;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(() => {
       autoSaveTimer.current = null;
@@ -103,6 +123,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
   }, []);
 
   const markUnsaved = useCallback(() => {
+    if (deleting.current) return;
     revision.current += 1;
     hasUnsavedChanges.current = true;
     setSaveState("unsaved");
@@ -159,13 +180,18 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
 
   const toolbarState = useEditorState({ editor, selector: selectToolbarState });
 
+  useEffect(() => {
+    editor?.setEditable(operation === null, false);
+  }, [editor, operation]);
+
   function handleSave(submitAfterSave = false): Promise<boolean> {
-    if (!editor) return Promise.resolve(false);
+    if (!editor || deleting.current) return Promise.resolve(false);
 
     if (activeSave.current) {
       return activeSave.current.then((saved) => {
         if (!saved) return false;
-        if (hasUnsavedChanges.current) return handleSave(submitAfterSave);
+        if (deleting.current) return false;
+        if (hasUnsavedChanges.current) return saveRef.current(submitAfterSave);
         if (submitAfterSave) router.push("/notes");
         return true;
       });
@@ -185,7 +211,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
     const request = (async (): Promise<boolean> => {
       try {
         const result = await saveNoteAction({
-          id: currentNoteId,
+          id: noteIdRef.current,
           title,
           contentJson: serializedContent,
         });
@@ -196,6 +222,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
           return false;
         }
 
+        noteIdRef.current = result.id;
         setCurrentNoteId(result.id);
 
         if (revision.current === savedRevision) {
@@ -222,7 +249,8 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
     return request.then((saved) => {
       if (activeSave.current === request) activeSave.current = null;
       if (!saved) return false;
-      if (hasUnsavedChanges.current) return handleSave(submitAfterSave);
+      if (deleting.current) return false;
+      if (hasUnsavedChanges.current) return saveRef.current(submitAfterSave);
       if (submitAfterSave) router.push("/notes");
       return true;
     });
@@ -239,7 +267,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
         event.ctrlKey ||
         event.shiftKey ||
         event.altKey ||
-        !hasUnsavedChanges.current
+        (!hasUnsavedChanges.current && !operationInProgress.current)
       ) {
         return;
       }
@@ -262,7 +290,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
 
       event.preventDefault();
       event.stopImmediatePropagation();
-      if (navigationInProgress.current) return;
+      if (operationInProgress.current || navigationInProgress.current) return;
       navigationInProgress.current = true;
 
       void saveRef
@@ -285,14 +313,14 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
       if (
         !(form instanceof HTMLFormElement) ||
         form.classList.contains("note-editor-form") ||
-        !hasUnsavedChanges.current
+        (!hasUnsavedChanges.current && !operationInProgress.current)
       ) {
         return;
       }
 
       event.preventDefault();
       event.stopImmediatePropagation();
-      if (navigationInProgress.current) return;
+      if (operationInProgress.current || navigationInProgress.current) return;
       navigationInProgress.current = true;
       const submitter = event.submitter;
 
@@ -338,7 +366,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
       if (autoSaveTimer.current) {
         clearTimeout(autoSaveTimer.current);
         autoSaveTimer.current = null;
-        if (hasUnsavedChanges.current) void saveRef.current(false);
+        if (hasUnsavedChanges.current && !deleting.current) void saveRef.current(false);
       }
     },
     [],
@@ -351,7 +379,112 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
 
   function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (operationInProgress.current) return;
     void handleSave(true);
+  }
+
+  async function handleShare() {
+    const id = noteIdRef.current;
+    if (!id || operationInProgress.current) return;
+    operationInProgress.current = true;
+    setOperation("share");
+    setOperationError("");
+    setCopyStatus("");
+
+    try {
+      if (hasUnsavedChanges.current || activeSave.current) {
+        const saved = await saveRef.current(false);
+        if (!saved) return;
+      }
+
+      const result = await enableShareAction({ id });
+      if (!result.success) {
+        setOperationError(result.error.message);
+        return;
+      }
+      setShareEnabled(true);
+      setShareUrl(result.shareUrl);
+    } catch {
+      setOperationError("We couldn't share your note. Please try again.");
+    } finally {
+      operationInProgress.current = false;
+      setOperation(null);
+    }
+  }
+
+  async function handleRevokeShare() {
+    const id = noteIdRef.current;
+    if (!id || operationInProgress.current) return;
+    operationInProgress.current = true;
+    setOperation("revoke");
+    setOperationError("");
+    setCopyStatus("");
+
+    try {
+      const result = await disableShareAction({ id });
+      if (!result.success) {
+        setOperationError(result.error.message);
+        return;
+      }
+      setShareEnabled(false);
+      setShareUrl("");
+    } catch {
+      setOperationError("We couldn't disable sharing. Please try again.");
+    } finally {
+      operationInProgress.current = false;
+      setOperation(null);
+    }
+  }
+
+  async function handleCopyShareLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopyStatus("Link copied.");
+    } catch {
+      setCopyStatus("Select and copy the link above.");
+    }
+  }
+
+  async function handleDelete() {
+    const id = noteIdRef.current;
+    if (!id || operationInProgress.current) return;
+    if (!window.confirm("Delete this note permanently? Its share link will also stop working.")) {
+      return;
+    }
+
+    operationInProgress.current = true;
+    deleting.current = true;
+    setOperation("delete");
+    setOperationError("");
+    if (autoSaveTimer.current) {
+      clearTimeout(autoSaveTimer.current);
+      autoSaveTimer.current = null;
+    }
+
+    let deleted = false;
+    try {
+      // Let an already submitted save finish before deleting the row it writes.
+      await activeSave.current;
+      const result = await deleteNoteAction({ id });
+      if (!result.success) {
+        setOperationError(result.error.message);
+        return;
+      }
+
+      deleted = true;
+      hasUnsavedChanges.current = false;
+      router.push("/notes");
+      router.refresh();
+    } catch {
+      setOperationError("We couldn't delete your note. Please try again.");
+    } finally {
+      deleting.current = deleted;
+      if (!deleted) {
+        operationInProgress.current = false;
+        setOperation(null);
+        if (hasUnsavedChanges.current) scheduleAutoSave();
+      }
+    }
   }
 
   function handleParagraph() {
@@ -429,7 +562,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
     editor?.commands.clearContent();
   }
 
-  const toolbarDisabled = !editor || isSaving;
+  const toolbarDisabled = !editor || isSaving || operation !== null;
   const saveLabel =
     saveState === "saving"
       ? "Saving"
@@ -446,7 +579,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
           <span>Title</span>
           <input
             autoComplete="off"
-            disabled={isSaving}
+            disabled={isSaving || operation !== null}
             id="note-title"
             maxLength={200}
             onChange={handleTitleChange}
@@ -458,6 +591,9 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
           <p aria-live="polite" className={`save-status save-status-${saveState}`} role="status">
             {saveLabel}
           </p>
+          <button className="auth-submit note-submit" disabled={!editor || isSaving} type="submit">
+            {isSaving ? "Saving…" : "Save"}
+          </button>
         </div>
       </div>
 
@@ -579,7 +715,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
       <div className="note-editor-footer">
         <button
           className="secondary-button"
-          disabled={!editor || isSaving}
+          disabled={toolbarDisabled}
           onClick={handleClear}
           type="button"
         >
@@ -589,6 +725,87 @@ export function NoteEditor({ noteId, initialTitle, initialContent }: NoteEditorP
           {isSaving ? "Saving…" : "Save"}
         </button>
       </div>
+
+      {currentNoteId ? (
+        <section aria-labelledby="note-sharing-heading" className="note-sharing-controls">
+          <div>
+            <h2 id="note-sharing-heading">Share note</h2>
+            <p className="page-description" role="status">
+              {shareEnabled
+                ? "Sharing is enabled. Anyone with the link can read this note and future edits."
+                : "This note is private. Create a link to let anyone read it."}
+            </p>
+          </div>
+          {shareEnabled ? (
+            <p className="page-description">
+              Creating a replacement link disables the previous link.
+            </p>
+          ) : null}
+          {shareUrl ? (
+            <div className="share-link-controls">
+              <label className="note-title-field" htmlFor="note-share-link">
+                <span>Share link</span>
+                <input
+                  id="note-share-link"
+                  onFocus={(event) => event.currentTarget.select()}
+                  readOnly
+                  value={shareUrl}
+                />
+              </label>
+              <button
+                className="secondary-button"
+                disabled={operation !== null}
+                onClick={handleCopyShareLink}
+                type="button"
+              >
+                Copy link
+              </button>
+            </div>
+          ) : null}
+          {copyStatus ? (
+            <p className="page-description" role="status">
+              {copyStatus}
+            </p>
+          ) : null}
+          <div className="note-management-buttons">
+            <button
+              className="secondary-button"
+              disabled={operation !== null || !editor}
+              onClick={handleShare}
+              type="button"
+            >
+              {operation === "share"
+                ? "Creating link…"
+                : shareEnabled
+                  ? "Replace share link"
+                  : "Share"}
+            </button>
+            {shareEnabled ? (
+              <button
+                className="secondary-button"
+                disabled={operation !== null}
+                onClick={handleRevokeShare}
+                type="button"
+              >
+                {operation === "revoke" ? "Disabling…" : "Disable sharing"}
+              </button>
+            ) : null}
+            <button
+              className="secondary-button danger-button"
+              disabled={operation !== null}
+              onClick={handleDelete}
+              type="button"
+            >
+              {operation === "delete" ? "Deleting…" : "Delete note"}
+            </button>
+          </div>
+          {operationError ? (
+            <p className="note-editor-error" role="alert">
+              {operationError}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
     </form>
   );
 }
